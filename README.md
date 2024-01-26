@@ -4,7 +4,6 @@ This is a shell script for compiling and updating FlashGBX on macOs, resulting i
 
 ## Prerequisites 
 - Python
-  > brew install python
 - Pyinstaller
   > pip install -U pyinstaller
 
