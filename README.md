@@ -4,6 +4,8 @@ This is a shell script for compiling and updating FlashGBX on macOs, resulting i
 
 The the resulting application, as of v3.36, can be downloaded from releases, if you don't want to bother with everything else.
 
+FlashGBX official repo: https://github.com/lesserkuma/FlashGBX/
+
 ## Prerequisites 
 - Python
 - Pyinstaller
