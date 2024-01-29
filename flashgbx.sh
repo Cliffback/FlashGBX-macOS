@@ -37,16 +37,72 @@ function updateFlashGBX() {
       cd "$repo_dir"
       git fetch || { echo "Error fetching repository updates"; exit 1; }
     fi
-
+    
+    # Checkout latest release
     git checkout tags/$latest_version > /dev/null 2>&1 || { echo "Error checking out tag $latest_version"; exit 1; }
-
-    yes | pyinstaller --name 'FlashGBX' --icon 'FlashGBX/res/icon.ico' --windowed run.py
-    plutil -replace CFBundleShortVersionString -string "$latest_version" dist/FlashGBX.app/Contents/Info.plist
+    
+    #update_spec
+    printf "# -*- mode: python ; coding: utf-8 -*-\n\n\
+a = Analysis(\n\
+    ['run.py'],\n\
+    pathex=[],\n\
+    binaries=[],\n\
+    datas=[],\n\
+    hiddenimports=[],\n\
+    hookspath=[],\n\
+    hooksconfig={},\n\
+    runtime_hooks=[],\n\
+    excludes=[],\n\
+    noarchive=False,\n\
+)\n\
+pyz = PYZ(a.pure)\n\n\
+exe = EXE(\n\
+    pyz,\n\
+    a.scripts,\n\
+    [],\n\
+    exclude_binaries=True,\n\
+    name='FlashGBX',\n\
+    debug=False,\n\
+    bootloader_ignore_signals=False,\n\
+    strip=False,\n\
+    upx=True,\n\
+    console=False,\n\
+    disable_windowed_traceback=False,\n\
+    argv_emulation=False,\n\
+    target_arch=None,\n\
+    codesign_identity=None,\n\
+    entitlements_file=None,\n\
+    icon=['FlashGBX/res/icon.ico'],\n\
+)\n\
+coll = COLLECT(\n\
+    exe,\n\
+    a.binaries,\n\
+    a.datas,\n\
+    strip=False,\n\
+    upx=True,\n\
+    upx_exclude=[],\n\
+    name='FlashGBX',\n\
+)\n\
+info_plist = {\n\
+    'CFBundleName': 'FlashGBX',\n\
+    'CFBundleDisplayName': 'FlashGBX',\n\
+    'CFBundleGetInfoString': 'Reads and writes Game Boy and Game Boy Advance cartridge data.',\n\
+    'CFBundleShortVersionString': '3.36',\n\
+    'CFBundleIdentifier': 'com.lesserkuma.FlashGBX',\n\
+}\n\
+app = BUNDLE(\n\
+    coll,\n\
+    name='FlashGBX.app',\n\
+    icon='FlashGBX/res/icon.ico',\n\
+    bundle_identifier='com.lesserkuma.FlashGBX',\n\
+    info_plist=info_plist,\n\
+)" > FlashGBX.spec
+    
+    yes | pyinstaller FlashGBX.spec
+    #plutil -replace CFBundleShortVersionString -string "$latest_version" dist/FlashGBX.app/Contents/Info.plist
     rsync -a --delete dist/FlashGBX.app/ /Applications/FlashGBX.app/
 
     echo "Successfully updated FlashGBX to version $latest_version."
 
   )
 }
-
-
