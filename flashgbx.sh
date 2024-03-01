@@ -46,6 +46,10 @@ function updateFlashGBX() {
       }
     fi
 
+    # Reset repo to upstream
+    git clean -fd
+    git reset --hard
+
     # Checkout latest release
     git checkout tags/"$latest_version" >/dev/null 2>&1 || {
       echo "Error checking out tag $latest_version"
@@ -98,7 +102,7 @@ info_plist = {\n\
     'CFBundleName': 'FlashGBX',\n\
     'CFBundleDisplayName': 'FlashGBX',\n\
     'CFBundleGetInfoString': 'Reads and writes Game Boy and Game Boy Advance cartridge data.',\n\
-    'CFBundleShortVersionString': '3.36',\n\
+    'CFBundleShortVersionString': '%s',\n\
     'CFBundleIdentifier': 'com.lesserkuma.FlashGBX',\n\
 }\n\
 app = BUNDLE(\n\
@@ -107,7 +111,7 @@ app = BUNDLE(\n\
     icon='FlashGBX/res/icon.ico',\n\
     bundle_identifier='com.lesserkuma.FlashGBX',\n\
     info_plist=info_plist,\n\
-)" >FlashGBX.spec
+)" "$latest_version" > FlashGBX.spec
 
     yes | pyinstaller FlashGBX.spec
     #plutil -replace CFBundleShortVersionString -string "$latest_version" dist/FlashGBX.app/Contents/Info.plist
@@ -124,37 +128,31 @@ function createFlashGBXImage {
     set -e
 
     repo_dir="$HOME/.tmp/FlashGBX"
+    release_repo="Cliffback/FlashGBX-macOS"
 
     latest_version=$(curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}') || {
       echo "Error fetching latest version information"
       exit 1
     }
 
-    # Prompt for user confirmation
+    # Prompt for user confirmation to create an image
     echo -n "Do you want to create an image of FlashGBX v$latest_version? (y/n): "
-
     read -r user_input
     if [[ ! $user_input =~ ^[Yy]$ ]]; then
       echo "Creation cancelled."
       return 0
     fi
 
+    # Clone or fetch the FlashGBX repository
     if [ ! -d "$repo_dir" ]; then
       mkdir -p "$repo_dir"
       git clone https://github.com/lesserkuma/FlashGBX.git "$repo_dir" || {
         echo "Error cloning repository"
         exit 1
       }
-      cd "$repo_dir"
-    else
-      cd "$repo_dir"
-      git fetch || {
-        echo "Error fetching repository updates"
-        exit 1
-      }
     fi
-
-    # Checkout latest release
+    cd "$repo_dir"
+    git fetch
     git checkout tags/"$latest_version" >/dev/null 2>&1 || {
       echo "Error checking out tag $latest_version"
       exit 1
@@ -206,7 +204,7 @@ info_plist = {\n\
     'CFBundleName': 'FlashGBX',\n\
     'CFBundleDisplayName': 'FlashGBX',\n\
     'CFBundleGetInfoString': 'Reads and writes Game Boy and Game Boy Advance cartridge data.',\n\
-    'CFBundleShortVersionString': '3.36',\n\
+    'CFBundleShortVersionString': '%s',\n\
     'CFBundleIdentifier': 'com.lesserkuma.FlashGBX',\n\
 }\n\
 app = BUNDLE(\n\
@@ -215,7 +213,7 @@ app = BUNDLE(\n\
     icon='FlashGBX/res/icon.ico',\n\
     bundle_identifier='com.lesserkuma.FlashGBX',\n\
     info_plist=info_plist,\n\
-)" >FlashGBX.spec
+)" "$latest_version" > FlashGBX.spec
 
     yes | pyinstaller FlashGBX.spec
     mkdir -p dist/dmg
@@ -242,5 +240,44 @@ app = BUNDLE(\n\
 
     echo "Successfully created image of FlashGBX v$latest_version."
 
+    # Check permission level for the release repository
+    permission_level=$(gh repo view "$release_repo" --json viewerPermission --jq '.viewerPermission')
+    if [[ $permission_level == "ADMIN" || $permission_level == "WRITE" ]]; then
+      # User has admin or write access, ask for confirmation to create a release
+      echo "You have permission to create a release on $release_repo."
+      echo "Do you want to create a release for FlashGBX v$latest_version? (y/n): "
+      read -r release_input
+
+      if [[ $release_input =~ ^[Yy]$ ]]; then
+        # User confirmed, create a release
+        dmg_path="dist/FlashGBX.dmg"  # Ensure this is the correct path to your DMG file
+        if [ -f "$dmg_path" ]; then
+          release_notes=$(cat <<EOF
+App compiled and packaged from the official repo.
+
+Probably only works on Apple Silicone
+
+If you can't open it, it probably got quarantined during download. Run the following to unquarantine it:
+xattr -d com.apple.quarantine /path/to/FlashGBX.app
+EOF
+      )
+          gh release create "$latest_version" \
+            --repo "$release_repo" \
+            --title "FlashGBX v$latest_version" \
+            --notes "$release_notes" \
+            "$dmg_path"
+          echo "Release successfully created for FlashGBX v$latest_version."
+        else
+          echo "DMG file not found. Release not created."
+        fi  
+      else
+        echo "Release creation cancelled."
+      fi
+    else
+      echo "You do not have permission to create a release on $release_repo."
+    fi
+
+    # Clean up
+    cd "$HOME"
   )
 }
