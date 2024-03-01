@@ -2,7 +2,7 @@
 
 This is a shell script for compiling and updating FlashGBX on macOs, resulting in a "native" application that is also easy to update. 
 
-The the resulting application, as of v3.36, can be downloaded from releases, if you don't want to bother with everything else.
+Precompiled binaries can also be downloaded from releases, if you don't want to bother with the script.
 
 FlashGBX official repo: https://github.com/lesserkuma/FlashGBX/
 
