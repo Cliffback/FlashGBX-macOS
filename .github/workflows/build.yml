@@ -215,6 +215,9 @@ jobs:
           exit 1
         env:
           PAT: ${{ secrets.PAT }}
+          
+      - name: Clone FlashGBX repository
+        run: git clone https://github.com/lesserkuma/FlashGBX.git
 
       - name: Update FlashGBX repository
         run: |
