@@ -1,12 +1,7 @@
 name: Build FlashGBX
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -100,9 +95,4 @@ app = BUNDLE(\n\
       - name: Create artifact
         uses: actions/upload-artifact@v3
         with:
-          name: FlashGBX-${{ matrix.arch }}-v${{ env.latest_version }}
-          path: dist/FlashGBX.app
-
-      - name: Notify about successful build
-        run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
-
+          name: FlashGBX-${{ matrix.arch }}
