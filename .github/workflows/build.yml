@@ -31,6 +31,7 @@ jobs:
             echo "Error fetching latest version information"
             exit 1
           }
+          echo curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}'
           echo "Latest version: $latest_version"
           export latest_version="$latest_version"
           
