@@ -5,10 +5,10 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     strategy:
       matrix:
-        arch: [arm64]
+        arch: [amd64]
 
     steps:
       - name: Checkout repository
