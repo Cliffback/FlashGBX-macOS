@@ -8,24 +8,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Download latest version artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: latest_version
+          path: .
+
+      - name: Read latest version from artifact
+        id: read_latest_version
+        run: |
+          latest_version=$(cat latest_version)
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
+          
       - name: Download arm64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: FlashGBX-arm64-v${{ github.event.inputs.version }}
+          name: FlashGBX-arm64-v$latest_version
           path: ./dist
 
       - name: Download amd64 artifact
         uses: actions/download-artifact@v3
         with:
-          name: FlashGBX-amd64-v${{ github.event.inputs.version }}
+          name: FlashGBX-amd64-v$latest_version
           path: ./dist
 
       - name: Create release
         run: |
-          echo "Creating a release for FlashGBX v${{ github.event.inputs.version }}."
+          release_repo="${{ github.repository }}"
+          echo "Creating a release for FlashGBX v$latest_version."
           
-          arm64_dmg="./dist/FlashGBX-arm64-v${{ github.event.inputs.version }}/FlashGBX-arm64.dmg"
-          amd64_dmg="./dist/FlashGBX-amd64-v${{ github.event.inputs.version }}/FlashGBX-amd64.dmg"
+          arm64_dmg="./dist/FlashGBX-arm64-v$latest_version/FlashGBX-arm64.dmg"
+          amd64_dmg="./dist/FlashGBX-amd64-v$latest_version/FlashGBX-amd64.dmg"
           if [ -f "$arm64_dmg" ] && [ -f "$amd64_dmg" ]; then
             release_notes=$(cat <<EOF
           App compiled and packaged from the official repo.
@@ -36,12 +49,12 @@ jobs:
           xattr -d com.apple.quarantine /path/to/FlashGBX.app
           EOF
             )
-            gh release create "${{ github.event.inputs.version }}" \
+            gh release create "$latest_version test" \
               --repo "$release_repo" \
-              --title "FlashGBX v${{ github.event.inputs.version }}" \
+              --title "FlashGBX v$latest_version test" \
               --notes "$release_notes" \
               "$arm64_dmg" "$amd64_dmg"
-            echo "Release successfully created for FlashGBX v${{ github.event.inputs.version }}."
+            echo "Release successfully created for FlashGBX v$latest_version."
           else
             echo "DMG files not found. Release not created."
           fi
