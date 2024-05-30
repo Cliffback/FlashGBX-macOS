@@ -1,0 +1,49 @@
+name: Create FlashGBX Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: FlashGBX-arm64-v${{ github.event.inputs.version }}
+          path: ./dist
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: FlashGBX-amd64-v${{ github.event.inputs.version }}
+          path: ./dist
+
+      - name: Create release
+        run: |
+          echo "Creating a release for FlashGBX v${{ github.event.inputs.version }}."
+          
+          arm64_dmg="./dist/FlashGBX-arm64-v${{ github.event.inputs.version }}/FlashGBX-arm64.dmg"
+          amd64_dmg="./dist/FlashGBX-amd64-v${{ github.event.inputs.version }}/FlashGBX-amd64.dmg"
+          if [ -f "$arm64_dmg" ] && [ -f "$amd64_dmg" ]; then
+            release_notes=$(cat <<EOF
+          App compiled and packaged from the official repo.
+
+          Contains builds for both Apple Silicon (arm64) and Intel (amd64).
+
+          If you can't open it, it probably got quarantined during download. Run the following to unquarantine it:
+          xattr -d com.apple.quarantine /path/to/FlashGBX.app
+          EOF
+            )
+            gh release create "${{ github.event.inputs.version }}" \
+              --repo "$release_repo" \
+              --title "FlashGBX v${{ github.event.inputs.version }}" \
+              --notes "$release_notes" \
+              "$arm64_dmg" "$amd64_dmg"
+            echo "Release successfully created for FlashGBX v${{ github.event.inputs.version }}."
+          else
+            echo "DMG files not found. Release not created."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
