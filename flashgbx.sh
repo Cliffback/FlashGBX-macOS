@@ -114,6 +114,11 @@ app = BUNDLE(\n\
 )" "$latest_version" > FlashGBX.spec
 
     yes | pyinstaller FlashGBX.spec
+
+    # Manually copy cartridge information files to the app bundle
+    mkdir dist/FlashGBX.app/Contents/MacOS/config
+    cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
+    
     #plutil -replace CFBundleShortVersionString -string "$latest_version" dist/FlashGBX.app/Contents/Info.plist
     rsync -a --delete dist/FlashGBX.app/ /Applications/FlashGBX.app/
 
@@ -216,6 +221,11 @@ app = BUNDLE(\n\
 )" "$latest_version" > FlashGBX.spec
 
     yes | pyinstaller FlashGBX.spec
+
+    # Manually copy cartridge information files to the app bundle
+    mkdir dist/FlashGBX.app/Contents/MacOS/config
+    cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
+
     mkdir -p dist/dmg
     cp -r "dist/FlashGBX.app" dist/dmg
 
