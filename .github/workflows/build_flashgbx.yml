@@ -252,9 +252,9 @@ jobs:
           xattr -d com.apple.quarantine /path/to/FlashGBX.app
           EOF
             )
-            gh release create "$latest_version test" \
+            gh release create "test$latest_version" \
               --repo "$release_repo" \
-              --title "FlashGBX v$latest_version test" \
+              --title "FlashGBX v$latest_version" \
               --notes "$release_notes" \
               "$arm64_dmg" "$amd64_dmg"
             echo "Release successfully created for FlashGBX v$latest_version."
