@@ -239,8 +239,9 @@ jobs:
           release_repo="${{ github.repository }}"
           echo "Creating a release for FlashGBX v$latest_version."
           
-          arm64_dmg="./dist/FlashGBX-arm64-v$latest_version/FlashGBX-arm64.dmg"
-          amd64_dmg="./dist/FlashGBX-amd64-v$latest_version/FlashGBX-amd64.dmg"
+          arm64_dmg="./dist/FlashGBX-arm64.dmg"
+          amd64_dmg="./dist/FlashGBX-amd64.dmg"
+          
           if [ -f "$arm64_dmg" ] && [ -f "$amd64_dmg" ]; then
             release_notes=$(cat <<EOF
           App compiled and packaged from the official repo.
