@@ -59,7 +59,7 @@ jobs:
               pathex=[],
               binaries=[],
               datas=[],
-              hiddenimports=[],
+              hiddenimports=['serial'],
               hookspath=[],
               hooksconfig={},
               runtime_hooks=[],
