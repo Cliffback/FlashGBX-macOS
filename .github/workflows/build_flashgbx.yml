@@ -2,6 +2,11 @@ name: Build FlashGBX
 
 on:
   workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a new release?'
+        required: true
+        default: 'false' # Change to 'true' if you want to create a release by default
 
 jobs:
   build:
@@ -182,3 +187,50 @@ jobs:
 
       - name: Notify about successful build
         run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
+  
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event.inputs.create_release == 'true'
+
+    steps:
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: FlashGBX-arm64-v${{ env.latest_version }}
+          path: ./dist
+
+      - name: Download amd64 artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: FlashGBX-amd64-v${{ env.latest_version }}
+          path: ./dist
+
+      - name: Create release
+        run: |
+          release_repo="${{ github.repository }}"
+          echo "Creating a release for FlashGBX v${{ env.latest_version }}."
+          
+          arm64_dmg="./dist/FlashGBX-arm64-v${{ env.latest_version }}/FlashGBX-arm64.dmg"
+          amd64_dmg="./dist/FlashGBX-amd64-v${{ env.latest_version }}/FlashGBX-amd64.dmg"
+          if [ -f "$arm64_dmg" ] && [ -f "$amd64_dmg" ]; then
+            release_notes=$(cat <<EOF
+          App compiled and packaged from the official repo.
+
+          Contains builds for both Apple Silicon (arm64) and Intel (amd64).
+
+          If you can't open it, it probably got quarantined during download. Run the following to unquarantine it:
+          xattr -d com.apple.quarantine /path/to/FlashGBX.app
+          EOF
+            )
+            gh release create "${{ env.latest_version }}" \
+              --repo "$release_repo" \
+              --title "FlashGBX v${{ env.latest_version }}" \
+              --notes "$release_notes" \
+              "$arm64_dmg" "$amd64_dmg"
+            echo "Release successfully created for FlashGBX v${{ env.latest_version }}."
+          else
+            echo "DMG files not found. Release not created."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
