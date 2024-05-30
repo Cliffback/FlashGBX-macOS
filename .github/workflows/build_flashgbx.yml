@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       create_release:
-        description: 'Create a new release?'
+        description: 'Create a new release? yes|no'
         required: true
         options: ['yes', 'no']
         default: 'no'
@@ -21,6 +21,12 @@ jobs:
             arch: amd64
 
     steps:
+      - name: Validate input
+        run: |
+          if [[ "${{ github.event.inputs.create_release }}" != "yes" && "${{ github.event.inputs.create_release }}" != "no" ]]; then
+            echo "Error: Invalid input for 'create_release'. Allowed values are 'yes' or 'no'."
+            exit 1
+          fi
       - name: Checkout repository
         uses: actions/checkout@v3
 
