@@ -31,16 +31,15 @@ jobs:
             echo "Error fetching latest version information"
             exit 1
           }
-          echo curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}'
           echo "Latest version: $latest_version"
-          export latest_version="$latest_version"
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
           
       - name: Clone FlashGBX repository
         run: git clone https://github.com/lesserkuma/FlashGBX.git
 
       - name: Update FlashGBX repository
         run: |
-          echo $latest_version
+          echo "Latest version: $latest_version"
           repo_dir="${{ github.workspace }}/FlashGBX"
           cd "$repo_dir"
           git checkout tags/"$latest_version"
