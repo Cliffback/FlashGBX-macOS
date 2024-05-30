@@ -32,12 +32,29 @@ jobs:
       - name: Fetch latest version
         id: get_latest_version
         run: |
-          latest_version=$(curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}') || {
-            echo "Error fetching latest version information"
-            exit 1
-          }
-          echo "Latest version: $latest_version"
-          echo "latest_version=$latest_version" >> $GITHUB_ENV
+          GITHUB_API_URL="https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" $GITHUB_API_URL)
+            latest_version=$(echo "$response" | grep '"tag_name":' | awk -F\" '{print $4}')
+      
+            if [[ -n "$latest_version" ]]; then
+              echo "Latest version: $latest_version"
+              echo "latest_version=$latest_version" >> $GITHUB_ENV
+              exit 0
+            else
+              echo "Failed to fetch latest version (attempt $i/$MAX_RETRIES)"
+              echo "Response: $response"
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Error fetching latest version information after $MAX_RETRIES attempts"
+          exit 1
+        env:
+          PAT: ${{ secrets.PAT }}
           
       - name: Clone FlashGBX repository
         run: git clone https://github.com/lesserkuma/FlashGBX.git
@@ -175,15 +192,29 @@ jobs:
       - name: Fetch latest version
         id: get_latest_version
         run: |
-          latest_version=$(curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}') || {
-            echo "Error fetching latest version information"
-            exit 1
-          }
-          echo "Latest version: $latest_version"
-          echo "latest_version=$latest_version" >> $GITHUB_ENV
-          
-      - name: Clone FlashGBX repository
-        run: git clone https://github.com/lesserkuma/FlashGBX.git
+          GITHUB_API_URL="https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" $GITHUB_API_URL)
+            latest_version=$(echo "$response" | grep '"tag_name":' | awk -F\" '{print $4}')
+      
+            if [[ -n "$latest_version" ]]; then
+              echo "Latest version: $latest_version"
+              echo "latest_version=$latest_version" >> $GITHUB_ENV
+              exit 0
+            else
+              echo "Failed to fetch latest version (attempt $i/$MAX_RETRIES)"
+              echo "Response: $response"
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Error fetching latest version information after $MAX_RETRIES attempts"
+          exit 1
+        env:
+          PAT: ${{ secrets.PAT }}
 
       - name: Update FlashGBX repository
         run: |
