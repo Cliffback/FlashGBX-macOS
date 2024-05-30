@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build_amd64:
-    runs-on: macos-latest
+  build:
+    runs-on: macos-latest-large
     strategy:
       matrix:
         arch: [amd64]
@@ -60,7 +60,7 @@ jobs:
               pathex=[],
               binaries=[],
               datas=[],
-              hiddenimports=['serial'],
+              hiddenimports=[],
               hookspath=[],
               hooksconfig={},
               runtime_hooks=[],
