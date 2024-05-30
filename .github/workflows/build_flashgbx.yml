@@ -138,27 +138,41 @@ jobs:
           pyinstaller FlashGBX.spec
           mkdir dist/FlashGBX.app/Contents/MacOS/config
           cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
-
+          
       - name: Create DMG
         run: |
           mkdir -p "$repo_dir/dist/dmg"
           cp -r "$repo_dir/dist/FlashGBX.app" "$repo_dir/dist/dmg"
 
-          dmg_path="$repo_dir/dist/FlashGBX.dmg"
-
-          create-dmg \
-            --volname "FlashGBX" \
-            --volicon "$repo_dir/FlashGBX/res/icon.ico" \
-            --window-pos 200 120 \
-            --window-size 600 300 \
-            --icon-size 100 \
-            --icon "FlashGBX.app" 175 120 \
-            --hide-extension "FlashGBX.app" \
-            --app-drop-link 425 120 \
-            "$dmg_path" \
-            "$repo_dir/dist/dmg/"
-
-          echo "Successfully created image of FlashGBX v$latest_version."
+          dmg_path="$repo_dir/dist/FlashGBX-${{ matrix.arch }}.dmg"
+          
+          max_retries=5
+          retry_delay=10
+      
+          for attempt in $(seq 1 $max_retries); do
+            if create-dmg \
+                --volname "FlashGBX" \
+                --volicon "$repo_dir/FlashGBX/res/icon.ico" \
+                --window-pos 200 120 \
+                --window-size 600 300 \
+                --icon-size 100 \
+                --icon "FlashGBX.app" 175 120 \
+                --hide-extension "FlashGBX.app" \
+                --app-drop-link 425 120 \
+                "$dmg_path" \
+                "$repo_dir/dist/dmg/"; then
+              echo "Successfully created image of FlashGBX v$latest_version."
+              break
+            else
+              echo "Failed to create DMG (attempt $attempt/$max_retries). Retrying in $retry_delay seconds..."
+              sleep $retry_delay
+            fi
+      
+            if [[ $attempt -eq $max_retries ]]; then
+              echo "Error: Failed to create DMG after $max_retries attempts."
+              exit 1
+            fi
+          done
 
       - name: Create artifact
         uses: actions/upload-artifact@v3
