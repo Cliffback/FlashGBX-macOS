@@ -31,19 +31,13 @@ jobs:
           echo "latest_version=$latest_version" >> $GITHUB_ENV
 
       - name: Clone FlashGBX repository
-        run: |
-          repo_dir="${{ github.workspace }}/FlashGBX"
-          if [ ! -d "$repo_dir" ]; then
-            git clone https://github.com/lesserkuma/FlashGBX.git "$repo_dir"
-          fi
+        run: git clone https://github.com/lesserkuma/FlashGBX.git
 
       - name: Update FlashGBX repository
         run: |
+          echo $latest_version
           repo_dir="${{ github.workspace }}/FlashGBX"
           cd "$repo_dir"
-          git fetch
-          git clean -fd
-          git reset --hard
           git checkout tags/"$latest_version"
 
       - name: Create FlashGBX.spec
@@ -113,11 +107,37 @@ jobs:
           cd "$repo_dir"
           pyinstaller FlashGBX.spec
 
+      - name: Create DMG
+        run: |
+          repo_dir="${{ github.workspace }}/FlashGBX"
+          mkdir -p "$repo_dir/dist/dmg"
+          cp -r "$repo_dir/dist/FlashGBX.app" "$repo_dir/dist/dmg"
+
+          dmg_path="$repo_dir/dist/FlashGBX.dmg"
+          if [ -f "$dmg_path" ]; then
+            echo "Removing existing DMG file..."
+            rm "$dmg_path"
+          fi
+
+          create-dmg \
+            --volname "FlashGBX" \
+            --volicon "$repo_dir/FlashGBX/res/icon.icns" \
+            --window-pos 200 120 \
+            --window-size 600 300 \
+            --icon-size 100 \
+            --icon "FlashGBX.app" 175 120 \
+            --hide-extension "FlashGBX.app" \
+            --app-drop-link 425 120 \
+            "$dmg_path" \
+            "$repo_dir/dist/dmg/"
+
+          echo "Successfully created image of FlashGBX v$latest_version."
+
       - name: Create artifact
         uses: actions/upload-artifact@v3
         with:
           name: FlashGBX-${{ matrix.arch }}-v${{ env.latest_version }}
-          path: ${{ github.workspace }}/FlashGBX/dist/FlashGBX.app
+          path: ${{ github.workspace }}/FlashGBX/dist/FlashGBX.dmg
 
       - name: Notify about successful build
         run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
