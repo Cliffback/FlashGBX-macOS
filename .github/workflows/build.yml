@@ -46,19 +46,6 @@ jobs:
           git reset --hard
           git checkout tags/"$latest_version"
 
-      - name: Convert icon to icns format
-        run: |
-          from PIL import Image
-          import os
-
-          repo_dir="${{ github.workspace }}/FlashGBX"
-          icon_path = os.path.join(repo_dir, 'FlashGBX/res/icon.ico')
-          icns_path = os.path.join(repo_dir, 'FlashGBX/res/icon.icns')
-
-          if os.path.exists(icon_path):
-            img = Image.open(icon_path)
-            img.save(icns_path, 'ICNS')
-
       - name: Create FlashGBX.spec
         run: |
           repo_dir="${{ github.workspace }}/FlashGBX"
@@ -93,7 +80,7 @@ jobs:
               target_arch=None,
               codesign_identity=None,
               entitlements_file=None,
-              icon=['FlashGBX/res/icon.icns'],
+              icon=['FlashGBX/res/icon.ico'],
           )
           coll = COLLECT(
               exe,
@@ -114,7 +101,7 @@ jobs:
           app = BUNDLE(
               coll,
               name='FlashGBX.app',
-              icon='FlashGBX/res/icon.icns',
+              icon='FlashGBX/res/icon.ico',
               bundle_identifier='com.lesserkuma.FlashGBX',
               info_plist=info_plist,
           )
