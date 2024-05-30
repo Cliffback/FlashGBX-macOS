@@ -28,8 +28,8 @@ jobs:
         id: get_latest_version
         run: |
           latest_version=$(curl -s https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest | grep '"tag_name":' | awk -F\" '{print $4}')
-          echo "latest_version=$latest_version" >> $GITHUB_ENV
-
+          export latest_version="$latest_version"
+          
       - name: Clone FlashGBX repository
         run: git clone https://github.com/lesserkuma/FlashGBX.git
 
