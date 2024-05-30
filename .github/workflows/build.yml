@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build_amd64:
     runs-on: macos-latest
     strategy:
       matrix:
-        arch: [amd64, arm64]
+        arch: [amd64]
 
     steps:
       - name: Checkout repository
