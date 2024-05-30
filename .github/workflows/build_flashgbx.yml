@@ -8,8 +8,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, macos-13]
-        arch: [arm64, amd64]
         include:
           - os: macos-latest
             arch: arm64
