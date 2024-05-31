@@ -1,0 +1,29 @@
+name: Build FlashGBX
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create release?'
+        required: true
+        type: boolean
+        default: true
+      latest_version:
+        description: 'Release tag from FlashGBX'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      LATEST_VERSION: ${{ github.event.inputs.latest_version }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Print release version
+        run: echo "Latest version is $LATEST_VERSION"
+
+      # Add your other steps here
