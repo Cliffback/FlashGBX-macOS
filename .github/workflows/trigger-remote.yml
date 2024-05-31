@@ -23,7 +23,7 @@ jobs:
           repo: Cliffback/FlashGBX-macOS
           inputs: '{"create_release": "true", "latest_version": "${{ github.event.release.tag_name }}"}'
   trigger-manual:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != ''
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Remote Workflow
