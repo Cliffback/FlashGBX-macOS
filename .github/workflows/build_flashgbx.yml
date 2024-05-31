@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       create_release:
-        description: 'Create a new release?'
+        description: 'Create release?'
         required: true
         type: boolean
         default: true
