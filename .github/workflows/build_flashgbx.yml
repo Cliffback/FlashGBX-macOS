@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       create_release:
-        description: 'Create a new release? yes|no'
+        description: 'Create a new release?'
         required: true
-        options: ['yes', 'no']
-        default: 'no'
+        type: boolean
+        default: false
+
 
 jobs:
   build:
