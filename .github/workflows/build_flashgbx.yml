@@ -22,12 +22,6 @@ jobs:
             arch: amd64
 
     steps:
-      - name: Validate input
-        run: |
-          if [[ "${{ github.event.inputs.create_release }}" != "yes" && "${{ github.event.inputs.create_release }}" != "no" ]]; then
-            echo "Error: Invalid input for 'create_release'. Allowed values are 'yes' or 'no'."
-            exit 1
-          fi
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -207,7 +201,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event.inputs.create_release == 'yes'
+    if: github.event.inputs.create_release
 
     steps:
       - name: Download latest version artifact
