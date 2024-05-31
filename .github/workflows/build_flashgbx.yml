@@ -89,8 +89,9 @@ jobs:
       - name: Install create-dmg
         run: |
           brew install create-dmg
-          
-      - name: Clone FlashGBX repository
+
+      - name: Clone FlashGBX repository if not cached
+        if: steps.cache.outputs.cache-hit != 'true'
         run: git clone https://github.com/lesserkuma/FlashGBX.git
 
       - name: Update FlashGBX repository
@@ -99,7 +100,15 @@ jobs:
           repo_dir="${{ github.workspace }}/FlashGBX"
           echo "repo_dir=$repo_dir" >> $GITHUB_ENV
           cd "$repo_dir"
+          git fetch --tags
           git checkout tags/"$latest_version"
+          
+      - name: Update cache with latest changes
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.repo_dir }}
+          key: FlashGBX
 
       - name: Create FlashGBX.spec
         run: |
