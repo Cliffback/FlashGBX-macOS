@@ -11,8 +11,46 @@ on:
 
 
 jobs:
+  fetch-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch latest version
+        id: get_latest_version
+        run: |
+          GITHUB_API_URL="https://api.github.com/repos/lesserkuma/FlashGBX/releases/latest"
+          MAX_RETRIES=3
+          RETRY_DELAY=5
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            response=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" $GITHUB_API_URL)
+            latest_version=$(echo "$response" | grep '"tag_name":' | awk -F\" '{print $4}')
+      
+            if [[ -n "$latest_version" ]]; then
+              echo "Latest version: $latest_version"
+              echo "latest_version=$latest_version" >> $GITHUB_ENV
+              echo "$latest_version" > latest_version
+              exit 0
+            else
+              echo "Failed to fetch latest version (attempt $i/$MAX_RETRIES)"
+              echo "Response: $response"
+              sleep $RETRY_DELAY
+            fi
+          done
+
+          echo "Error fetching latest version information after $MAX_RETRIES attempts"
+          exit 1
+        env:
+          PAT: ${{ secrets.PAT }}
+
+      - name: Upload latest version artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest_version
+          path: latest_version
+          
   build:
     runs-on: ${{ matrix.os }}
+    needs: fetch-version
     strategy:
       matrix:
         include:
@@ -22,6 +60,19 @@ jobs:
             arch: amd64
 
     steps:
+      - name: Download latest version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: latest_version
+          path: latest_version
+
+      - name: Read latest version from artifact
+        id: read_latest_version
+        run: |
+          latest_version=$(cat latest_version)
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
+          echo "Latest version: $latest_version"
+          
       - name: Checkout repository
         uses: actions/checkout@v3
 
@@ -67,23 +118,6 @@ jobs:
         env:
           PAT: ${{ secrets.PAT }}
           
-      - name: Delete existing latest_version artifact
-        run: |
-          # Get the artifact ID of the existing latest_version artifact
-          artifact_id=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
-            https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.artifacts[] | select(.name == "latest_version") | .id')
-      
-          # If an artifact ID is found, delete the artifact
-          if [ -n "$artifact_id" ]; then
-            echo "Deleting existing latest_version artifact with ID: $artifact_id"
-            curl -s -X DELETE -H "Authorization: token ${{ secrets.PAT }}" \
-              https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$artifact_id
-          else
-            echo "No existing latest_version artifact found"
-          fi
-        env:
-          PAT: ${{ secrets.PAT }}
-
       - name: Upload latest version artifact
         uses: actions/upload-artifact@v4
         with:
