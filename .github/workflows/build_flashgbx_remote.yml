@@ -15,15 +15,222 @@ on:
 
 jobs:
   build:
+    runs-on: ${{ matrix.os }}
+    env:
+      latest_version: ${{ github.event.inputs.latest_version }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            arch: arm64
+          - os: macos-13
+            arch: x86_64
+    steps:
+      - name: Print release version
+        run: echo "Latest version is $latest_version"
+          
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller Pillow pyserial urllib3 six shiboken6 idna charset-normalizer certifi requests python-dateutil PySide6-Essentials PySide6-Addons PySide6
+            
+      - name: Install create-dmg
+        run: |
+          brew install create-dmg
+
+      - name: Clone FlashGBX repository
+        run: git clone https://github.com/lesserkuma/FlashGBX.git
+
+      - name: Update FlashGBX repository
+        run: |
+          echo "Latest version: $latest_version"
+          repo_dir="${{ github.workspace }}/FlashGBX"
+          echo "repo_dir=$repo_dir" >> $GITHUB_ENV
+          cd "$repo_dir"
+          git fetch --tags
+          git checkout tags/"$latest_version"
+
+      - name: Create FlashGBX.spec
+        run: |
+          repo_dir="${{ github.workspace }}/FlashGBX"
+          cat <<EOF > $repo_dir/FlashGBX.spec
+          # -*- mode: python ; coding: utf-8 -*-
+          a = Analysis(
+              ['run.py'],
+              pathex=[],
+              binaries=[],
+              datas=[],
+              hiddenimports=[],
+              hookspath=[],
+              hooksconfig={},
+              runtime_hooks=[],
+              excludes=[],
+              noarchive=False,
+          )
+          pyz = PYZ(a.pure)
+          exe = EXE(
+              pyz,
+              a.scripts,
+              [],
+              exclude_binaries=True,
+              name='FlashGBX',
+              debug=False,
+              bootloader_ignore_signals=False,
+              strip=False,
+              upx=True,
+              console=False,
+              disable_windowed_traceback=False,
+              argv_emulation=False,
+              target_arch=None,
+              codesign_identity=None,
+              entitlements_file=None,
+              icon=['FlashGBX/res/icon.ico'],
+          )
+          coll = COLLECT(
+              exe,
+              a.binaries,
+              a.datas,
+              strip=False,
+              upx=True,
+              upx_exclude=[],
+              name='FlashGBX',
+          )
+          info_plist = {
+              'CFBundleName': 'FlashGBX',
+              'CFBundleDisplayName': 'FlashGBX',
+              'CFBundleGetInfoString': 'Reads and writes Game Boy and Game Boy Advance cartridge data.',
+              'CFBundleShortVersionString': '$latest_version',
+              'CFBundleIdentifier': 'com.lesserkuma.FlashGBX',
+          }
+          app = BUNDLE(
+              coll,
+              name='FlashGBX.app',
+              icon='FlashGBX/res/icon.ico',
+              bundle_identifier='com.lesserkuma.FlashGBX',
+              info_plist=info_plist,
+          )
+          EOF
+
+      - name: Build FlashGBX
+        run: |
+          cd "$repo_dir"
+          pyinstaller FlashGBX.spec
+          mkdir dist/FlashGBX.app/Contents/MacOS/config
+          cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
+          
+      - name: Create DMG
+        run: |
+          mkdir -p "$repo_dir/dist/dmg"
+          cp -r "$repo_dir/dist/FlashGBX.app" "$repo_dir/dist/dmg"
+
+          dmg_path="$repo_dir/dist/FlashGBX-${{ matrix.arch }}.dmg"
+          
+          max_retries=5
+          retry_delay=10
+      
+          for attempt in $(seq 1 $max_retries); do
+            if create-dmg \
+                --volname "FlashGBX" \
+                --volicon "$repo_dir/FlashGBX/res/icon.ico" \
+                --window-pos 200 120 \
+                --window-size 600 300 \
+                --icon-size 100 \
+                --icon "FlashGBX.app" 175 120 \
+                --hide-extension "FlashGBX.app" \
+                --app-drop-link 425 120 \
+                "$dmg_path" \
+                "$repo_dir/dist/dmg/"; then
+              echo "Successfully created image of FlashGBX v$latest_version."
+              break
+            else
+              echo "Failed to create DMG (attempt $attempt/$max_retries). Retrying in $retry_delay seconds..."
+              sleep $retry_delay
+            fi
+      
+            if [[ $attempt -eq $max_retries ]]; then
+              echo "Error: Failed to create DMG after $max_retries attempts."
+              exit 1
+            fi
+          done
+
+      - name: Create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlashGBX-${{ matrix.arch }}-v${{ env.latest_version }}
+          path: ${{ github.workspace }}/FlashGBX/dist/FlashGBX-${{ matrix.arch }}.dmg
+
+      - name: Notify about successful build
+        run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
+  
+  release:
     runs-on: ubuntu-latest
     env:
-      LATEST_VERSION: ${{ github.event.inputs.latest_version }}
-
+      latest_version: ${{ github.event.inputs.latest_version }}
+    needs: build
+    if: ${{ github.event.inputs.create_release == 'true' }}
+    
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v2
+      - name: Download latest version artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: latest_version
+          path: .
 
-      - name: Print release version
-        run: echo "Latest version is $LATEST_VERSION"
+      - name: Read latest version from artifact
+        id: read_latest_version
+        run: |
+          latest_version=$(cat latest_version)
+          echo "latest_version=$latest_version" >> $GITHUB_ENV
+          echo "Latest version: $latest_version"
+          
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: FlashGBX-arm64-v${{ env.latest_version }}
+          path: ./dist
+
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: FlashGBX-x86_64-v${{ env.latest_version }}
+          path: ./dist
+
+      - name: Create release
+        run: |
+          release_repo="${{ github.repository }}"
+          echo "Creating a release for FlashGBX v$latest_version."
+          
+          arm64_dmg="./dist/FlashGBX-arm64.dmg"
+          x86_64_dmg="./dist/FlashGBX-x86_64.dmg"
+          
+          if [ -f "$arm64_dmg" ] && [ -f "$x86_64_dmg" ]; then
+            release_notes=$(cat <<EOF
+          App compiled and packaged from the official repo.
+
+          Contains builds for both Apple Silicon (arm64) and Intel (x86_64).
+
+          If you can't open it, it probably got quarantined during download. Run the following to unquarantine it:
+          xattr -d com.apple.quarantine /path/to/FlashGBX.app
+          EOF
+            )
+            gh release create "$latest_version" \
+              --repo "$release_repo" \
+              --title "FlashGBX v$latest_version" \
+              --notes "$release_notes" \
+              "$arm64_dmg" "$x86_64_dmg"
+            echo "Release successfully created for FlashGBX v$latest_version."
+          else
+            echo "DMG files not found. Release not created."
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
       # Add your other steps here
