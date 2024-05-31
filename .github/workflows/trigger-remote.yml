@@ -25,3 +25,23 @@ jobs:
           repository: Cliffback/FlashGBX-macOS
           event-type: workflow-dispatch
           client-payload: '{"create_release": true, "latest_version": "${{ env.RELEASE_TAG }}"}'
+  trigger-v1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Remote Workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Build FlashGBX Remotely
+          token: ${{ secrets.PAT }}
+          repo: Cliffback/FlashGBX-macOS
+          inputs: '{"create_release": "true", "latest_version": "${{ github.event.release.tag_name }}"}'
+  trigger-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Remote Workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Build FlashGBX Remotely
+          token: ${{ secrets.PAT }}
+          repo: Cliffback/FlashGBX-macOS
+          inputs: '{"create_release": "true", "latest_version": "${{ env.RELEASE_TAG }}"}'
