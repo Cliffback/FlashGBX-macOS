@@ -238,10 +238,10 @@ jobs:
           name: FlashGBX-arm64-v${{ env.latest_version }}
           path: ./dist
 
-      - name: Download amd64 artifact
+      - name: Download x86_64 artifact
         uses: actions/download-artifact@v4
         with:
-          name: FlashGBX-amd64-v${{ env.latest_version }}
+          name: FlashGBX-x86_64-v${{ env.latest_version }}
           path: ./dist
 
       - name: Create release
