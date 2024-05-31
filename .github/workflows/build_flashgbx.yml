@@ -9,7 +9,6 @@ on:
         type: boolean
         default: true
 
-
 jobs:
   fetch-version:
     runs-on: ubuntu-latest
@@ -102,13 +101,6 @@ jobs:
           cd "$repo_dir"
           git fetch --tags
           git checkout tags/"$latest_version"
-          
-      - name: Update cache with latest changes
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.repo_dir }}
-          key: FlashGBX
 
       - name: Create FlashGBX.spec
         run: |
@@ -218,6 +210,19 @@ jobs:
         with:
           name: FlashGBX-${{ matrix.arch }}-v${{ env.latest_version }}
           path: ${{ github.workspace }}/FlashGBX/dist/FlashGBX-${{ matrix.arch }}.dmg
+          
+      - name: Restore and Clean Repository
+        run: |
+          cd ${{ env.repo_dir }}
+          git restore .
+          git clean -f
+
+      - name: Update cache with latest changes
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.repo_dir }}
+          key: FlashGBX
 
       - name: Notify about successful build
         run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
