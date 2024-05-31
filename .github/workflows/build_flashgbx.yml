@@ -68,6 +68,23 @@ jobs:
         env:
           PAT: ${{ secrets.PAT }}
           
+      - name: Delete existing latest_version artifact
+        run: |
+          # Get the artifact ID of the existing latest_version artifact
+          artifact_id=$(curl -s -H "Authorization: token ${{ secrets.PAT }}" \
+            https://api.github.com/repos/${{ github.repository }}/actions/artifacts | jq '.artifacts[] | select(.name == "latest_version") | .id')
+      
+          # If an artifact ID is found, delete the artifact
+          if [ -n "$artifact_id" ]; then
+            echo "Deleting existing latest_version artifact with ID: $artifact_id"
+            curl -s -X DELETE -H "Authorization: token ${{ secrets.PAT }}" \
+              https://api.github.com/repos/${{ github.repository }}/actions/artifacts/$artifact_id
+          else
+            echo "No existing latest_version artifact found"
+          fi
+        env:
+          PAT: ${{ secrets.PAT }}
+
       - name: Upload latest version artifact
         uses: actions/upload-artifact@v4
         with:
