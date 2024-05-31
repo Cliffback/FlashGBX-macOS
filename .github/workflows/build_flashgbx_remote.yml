@@ -1,4 +1,4 @@
-name: Build FlashGBX
+name: Build FlashGBX From Remote
 
 on:
   workflow_dispatch:
