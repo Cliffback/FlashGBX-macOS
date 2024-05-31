@@ -80,6 +80,14 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -89,8 +97,7 @@ jobs:
         run: |
           brew install create-dmg
 
-      - name: Clone FlashGBX repository if not cached
-        if: steps.cache.outputs.cache-hit != 'true'
+      - name: Clone FlashGBX repository
         run: git clone https://github.com/lesserkuma/FlashGBX.git
 
       - name: Update FlashGBX repository
@@ -210,19 +217,6 @@ jobs:
         with:
           name: FlashGBX-${{ matrix.arch }}-v${{ env.latest_version }}
           path: ${{ github.workspace }}/FlashGBX/dist/FlashGBX-${{ matrix.arch }}.dmg
-          
-      - name: Restore and Clean Repository
-        run: |
-          cd ${{ env.repo_dir }}
-          git restore .
-          git clean -f
-
-      - name: Update cache with latest changes
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ env.repo_dir }}
-          key: FlashGBX
 
       - name: Notify about successful build
         run: echo "Successfully built FlashGBX for ${{ matrix.arch }} architecture."
