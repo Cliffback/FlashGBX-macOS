@@ -1,0 +1,21 @@
+name: Trigger Remote Workflow on Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  trigger-remote-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract release tag
+        id: extract_tag
+        run: echo "RELEASE_TAG=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
+      - name: Trigger remote workflow
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.REMOTE_REPO_TOKEN }}
+          repository: Cliffback/FlashGBX-macOS
+          event-type: workflow-dispatch
+          client-payload: '{"create_release": true, "latest_version": "${{ env.RELEASE_TAG }}"}'
