@@ -77,7 +77,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
 
@@ -250,13 +250,13 @@ jobs:
           echo "Creating a release for FlashGBX v$latest_version."
           
           arm64_dmg="./dist/FlashGBX-arm64.dmg"
-          amd64_dmg="./dist/FlashGBX-amd64.dmg"
+          x86_64_dmg="./dist/FlashGBX-x86_64.dmg"
           
-          if [ -f "$arm64_dmg" ] && [ -f "$amd64_dmg" ]; then
+          if [ -f "$arm64_dmg" ] && [ -f "$x86_64_dmg" ]; then
             release_notes=$(cat <<EOF
           App compiled and packaged from the official repo.
 
-          Contains builds for both Apple Silicon (arm64) and Intel (amd64).
+          Contains builds for both Apple Silicon (arm64) and Intel (x86_64).
 
           If you can't open it, it probably got quarantined during download. Run the following to unquarantine it:
           xattr -d com.apple.quarantine /path/to/FlashGBX.app
@@ -266,7 +266,7 @@ jobs:
               --repo "$release_repo" \
               --title "FlashGBX v$latest_version" \
               --notes "$release_notes" \
-              "$arm64_dmg" "$amd64_dmg"
+              "$arm64_dmg" "$x86_64_dmg"
             echo "Release successfully created for FlashGBX v$latest_version."
           else
             echo "DMG files not found. Release not created."
