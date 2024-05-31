@@ -80,6 +80,11 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller Pillow pyserial urllib3 six shiboken6 idna charset-normalizer certifi requests python-dateutil PySide6-Essentials PySide6-Addons PySide6
+
       - name: Cache Python dependencies
         uses: actions/cache@v3
         with:
@@ -87,12 +92,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pyinstaller Pillow pyserial urllib3 six shiboken6 idna charset-normalizer certifi requests python-dateutil PySide6-Essentials PySide6-Addons PySide6
-          
+            
       - name: Install create-dmg
         run: |
           brew install create-dmg
