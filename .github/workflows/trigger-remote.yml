@@ -3,6 +3,12 @@ name: Trigger Remote Workflow on Release
 on:
   release:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag'
+        required: true
+        type: string
 
 jobs:
   trigger-remote-workflow:
