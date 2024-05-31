@@ -11,7 +11,8 @@ on:
         type: string
 
 jobs:
-  trigger-v1:
+  trigger-release:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Remote Workflow
@@ -21,7 +22,8 @@ jobs:
           token: ${{ secrets.PAT }}
           repo: Cliffback/FlashGBX-macOS
           inputs: '{"create_release": "true", "latest_version": "${{ github.event.release.tag_name }}"}'
-  trigger-v2:
+  trigger-manual:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Remote Workflow
@@ -30,4 +32,4 @@ jobs:
           workflow: Build FlashGBX Remotely
           token: ${{ secrets.PAT }}
           repo: Cliffback/FlashGBX-macOS
-          inputs: '{"create_release": "true", "latest_version": "1.1"}'
+          inputs: '{"create_release": "true", "latest_version": "${{ github.event.inputs.release_tag }}"}'
