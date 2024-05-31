@@ -57,7 +57,7 @@ jobs:
           - os: macos-latest
             arch: arm64
           - os: macos-13
-            arch: amd64
+            arch: x86_64
 
     steps:
       - name: Download latest version artifact
