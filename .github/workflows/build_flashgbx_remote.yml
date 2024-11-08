@@ -125,6 +125,7 @@ jobs:
           pyinstaller FlashGBX.spec
           mkdir dist/FlashGBX.app/Contents/MacOS/config
           cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
+          cp -R FlashGBX/res dist/FlashGBX.app/Contents/MacOS
           
       - name: Create DMG
         run: |
