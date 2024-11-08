@@ -118,7 +118,8 @@ app = BUNDLE(\n\
     # Manually copy cartridge information files to the app bundle
     mkdir dist/FlashGBX.app/Contents/MacOS/config
     cp -R FlashGBX/config/* dist/FlashGBX.app/Contents/MacOS/config
-    
+    cp -R FlashGBX/res dist/FlashGBX.app/Contents/MacOS
+      
     #plutil -replace CFBundleShortVersionString -string "$latest_version" dist/FlashGBX.app/Contents/Info.plist
     rsync -a --delete dist/FlashGBX.app/ /Applications/FlashGBX.app/
 
