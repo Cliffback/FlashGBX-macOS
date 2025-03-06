@@ -1,4 +1,4 @@
-# FlashGBX-macOS
+# FlashGBX-macOS [NOW IMPLEMENTED IN THE OFFICIAL REPO]
 
 This is a shell script for compiling and updating FlashGBX on macOs, resulting in a "native" application that is also easy to update. 
 
